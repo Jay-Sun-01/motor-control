@@ -1,0 +1,190 @@
+C51 COMPILER V9.00   2222                                                                  12/20/2018 20:30:10 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE 2222
+OBJECT MODULE PLACED IN 2222.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE 2222.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <reg52.h>
+   2          
+   3          //定义步进电机连接端口
+   4          sbit A1=P1^0;
+   5          sbit B1=P1^1;
+   6          sbit C1=P1^2;
+   7          sbit D1=P1^3;
+   8          //按键位定义
+   9          sbit key_s2 = P3^0;
+  10          sbit key_s3 = P3^1;
+  11          sbit key_s4 = P3^2;//
+  12          sbit key_s5 = P3^3;//
+  13          //LED灯位定义
+  14          sbit LED1 = P0^0;
+  15          sbit LED2 = P0^1;
+  16          sbit LED3 = P0^2;
+  17          
+  18          #define Coil_AB1 {A1=1;B1=1;C1=0;D1=0;}//AB相通电，其他相断电
+  19          #define Coil_BC1 {A1=0;B1=1;C1=1;D1=0;}//BC相通电，其他相断电
+  20          #define Coil_CD1 {A1=0;B1=0;C1=1;D1=1;}//CD相通电，其他相断电
+  21          #define Coil_DA1 {A1=1;B1=0;C1=0;D1=1;}//D相通电，其他相断电
+  22          
+  23          #define Coil_A1 {A1=1;B1=0;C1=0;D1=0;}//A相通电，其他相断电
+  24          #define Coil_B1 {A1=0;B1=1;C1=0;D1=0;}//B相通电，其他相断电
+  25          #define Coil_C1 {A1=0;B1=0;C1=1;D1=0;}//C相通电，其他相断电
+  26          #define Coil_D1 {A1=0;B1=0;C1=0;D1=1;}//D相通电，其他相断电
+  27          
+  28          #define Coil_OFF {A1=0;B1=0;C1=0;D1=0;}//全部断电
+  29          
+  30          unsigned char Speed;
+  31          unsigned char i;
+  32          /*------------------------------------------------
+  33          uS延时函数，含有输入参数 unsigned char t，无返回值
+  34          unsigned char 是定义无符号字符变量，其值的范围是
+  35          0~255 这里使用晶振12M，精确延时请使用汇编,大致延时
+  36          长度如下 T=tx2+5 uS 
+  37          ------------------------------------------------*/
+  38          void DelayUs2x(unsigned char t)
+  39          {   
+  40   1      while(--t);
+  41   1      }
+  42          /*------------------------------------------------
+  43          mS延时函数，含有输入参数 unsigned char t，无返回值
+  44          unsigned char 是定义无符号字符变量，其值的范围是
+  45          0~255 这里使用晶振12M，精确延时请使用汇编
+  46          ------------------------------------------------*/
+  47          void DelayMs(unsigned char t)
+  48          {
+  49   1      
+  50   1      while(t--)
+  51   1      {
+  52   2           //大致延时1mS
+  53   2           DelayUs2x(245);
+  54   2               DelayUs2x(245);
+  55   2      }
+C51 COMPILER V9.00   2222                                                                  12/20/2018 20:30:10 PAGE 2   
+
+  56   1      }
+  57          /*------------------------------------------------
+  58                              主函数
+  59          ------------------------------------------------*/
+  60          main()
+  61          {
+  62   1      unsigned int i=512;//旋转一周时间
+  63   1      unsigned char num;
+  64   1      EA=1;          //全局中断开
+  65   1      EX0=1;         //外部中断0开
+  66   1      IT0=1;         //1表示边沿触发
+  67   1      while(1)
+  68   1      {
+  69   2                      Coil_OFF
+  70   2                      Speed = 1;
+  71   2                  num = 0;
+  72   2                              if(key_s2 == 0)  //
+  73   2                      {
+  74   3                                                      DelayMs(10);
+  75   3                                                      if(key_s2 == 0)
+  76   3                                              {
+  77   4                                                       Coil_OFF
+  78   4                                              }
+  79   3                      }
+  80   2                      if(key_s3 == 0)  //
+  81   2                      {
+  82   3                                                      DelayMs(10);
+  83   3                                                      if(key_s3 == 0)
+  84   3                                              {
+  85   4                                                      for(i=0;i++;i<255)
+  86   4                                                      {
+  87   5                                                       
+  88   5                                                       Speed++;
+  89   5                                                      }
+  90   4                                              }
+  91   3                      }
+  92   2                      if(key_s5 == 0)  //
+  93   2                      {
+  94   3                                                      DelayMs(10);
+  95   3                                                      if(key_s5 == 0)
+  96   3                                              {
+  97   4      
+  98   4                                                   if(i >= 0)
+  99   4                                                       {
+ 100   5                                                        Speed--;}
+ 101   4                                              }
+ 102   3                      }
+ 103   2                      while((i--)&&key_s2)  //正向
+ 104   2                        {  
+ 105   3                           Coil_A1       
+ 106   3                           DelayMs(Speed);
+ 107   3                           Coil_AB1                //遇到Coil_AB1  用{A1=1;B1=1;C1=0;D1=0;}代替
+ 108   3                           DelayMs(Speed);         //改变这个参数可以调整电机转速 ,
+ 109   3                                                   //数字越小，转速越大,力矩越小
+ 110   3                               Coil_B1       
+ 111   3                           DelayMs(Speed);
+ 112   3                           Coil_BC1
+ 113   3                           DelayMs(Speed);
+ 114   3                               Coil_C1       
+ 115   3                           DelayMs(Speed);
+ 116   3                           Coil_CD1
+ 117   3                           DelayMs(Speed);
+C51 COMPILER V9.00   2222                                                                  12/20/2018 20:30:10 PAGE 3   
+
+ 118   3                               Coil_D1       
+ 119   3                           DelayMs(Speed);
+ 120   3                           Coil_DA1
+ 121   3                           DelayMs(Speed);
+ 122   3                        }
+ 123   2                        Coil_OFF
+ 124   2                        i=512;
+ 125   2                        while((i--)&&(!key_s2))//反向
+ 126   2                        {  
+ 127   3                           Coil_A1       
+ 128   3                           DelayMs(Speed);
+ 129   3                           Coil_DA1                //遇到Coil_AB1  用{A1=1;B1=1;C1=0;D1=0;}代替
+ 130   3                           DelayMs(Speed);         //改变这个参数可以调整电机转速 ,
+ 131   3                                                   //数字越小，转速越大,力矩越小
+ 132   3                               Coil_D1       
+ 133   3                           DelayMs(Speed);
+ 134   3                           Coil_CD1
+ 135   3                           DelayMs(Speed);
+ 136   3                               Coil_C1       
+ 137   3                           DelayMs(Speed);
+ 138   3                           Coil_BC1
+ 139   3                           DelayMs(Speed);
+ 140   3                               Coil_B1       
+ 141   3                           DelayMs(Speed);
+ 142   3                           Coil_AB1
+ 143   3                           DelayMs(Speed);
+ 144   3                        }
+ 145   2                      }
+ 146   1                      
+ 147   1      }
+ 148          /*------------------------------------------------
+ 149                           外部中断程序
+ 150          ------------------------------------------------*/
+ 151          void ISR_INT0(void) interrupt 0 
+ 152          {
+ 153   1      
+ 154   1      if(!INT0)
+ 155   1         {
+ 156   2         DelayMs(10);//在此处可以添加去抖动程序，防止按键抖动造成错误
+ 157   2         if(!INT0)
+ 158   2      //  while(!INT1);//等待按键释放
+ 159   2           {
+ 160   3           key_s2=!key_s2;   
+ 161   3           }
+ 162   2         }
+ 163   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    355    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
